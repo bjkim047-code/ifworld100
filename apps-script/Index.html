@@ -76,6 +76,7 @@
     button.secondary { background: transparent; color: var(--accent); }
     button:disabled { opacity: 0.5; cursor: wait; }
     .error { color: var(--warn); font-weight: 500; min-height: 1.6em; margin: 12px 0 0; }
+    .hint { color: var(--muted); font-size: 14px; text-align: center; margin: 12px 0 0; }
     .progress { display: flex; gap: 4px; margin: 8px 0 20px; }
     .progress span { flex: 1; height: 6px; border-radius: 3px; background: var(--line); }
     .progress span.done { background: var(--accent); }
@@ -92,7 +93,6 @@
     .review .no { font-weight: 700; color: var(--accent); min-width: 2.5em; }
     .review .ans { flex: 1; }
     .review .sub { display: block; font-size: 14px; color: var(--muted); }
-    .review button { flex: 0 0 auto; font-size: 14px; padding: 6px 12px; }
     .review .pts { font-weight: 700; white-space: nowrap; }
     .total {
       text-align: center;
@@ -130,26 +130,12 @@
       <h2 id="question-text"></h2>
       <div id="fields"></div>
       <p class="error" id="quiz-error"></p>
-      <div class="buttons">
-        <button type="button" class="secondary" id="prev-button">이전</button>
-        <button type="submit" id="next-button">다음</button>
-      </div>
+      <div class="buttons"><button type="submit" id="next-button">다음</button></div>
+      <p class="hint" id="quiz-hint"></p>
     </form>
   </section>
 
-  <!-- 3. 제출 전 확인 -->
-  <section id="review" hidden>
-    <div class="eyebrow">마지막 확인</div>
-    <h1>답을 확인해 주세요</h1>
-    <p class="lead">제출하면 고칠 수 없어요.</p>
-    <div class="card">
-      <ul class="review" id="review-list"></ul>
-    </div>
-    <p class="error" id="submit-error"></p>
-    <div class="buttons"><button type="button" id="submit-button">제출하기</button></div>
-  </section>
-
-  <!-- 4. 결과 -->
+  <!-- 3. 결과 -->
   <section id="result" hidden>
     <div class="eyebrow">제출 완료</div>
     <h1 id="result-title"></h1>
@@ -170,7 +156,7 @@
   function $(id) { return document.getElementById(id); }
 
   function show(sectionId) {
-    ['login', 'quiz', 'review', 'result'].forEach(function (id) { $(id).hidden = id !== sectionId; });
+    ['login', 'quiz', 'result'].forEach(function (id) { $(id).hidden = id !== sectionId; });
     window.scrollTo(0, 0);
   }
 
@@ -236,8 +222,9 @@
     }).join('');
     $('question-text').textContent = q.text;
     $('quiz-error').textContent = '';
-    $('prev-button').hidden = state.index === 0;
-    $('next-button').textContent = state.index === QUESTIONS.length - 1 ? '답 확인하기' : '다음';
+    var isLast = state.index === QUESTIONS.length - 1;
+    $('next-button').textContent = isLast ? '제출하기' : '다음';
+    $('quiz-hint').textContent = isLast ? '제출하면 답을 고칠 수 없어요.' : '다음으로 넘어가면 이 문제의 답은 고칠 수 없어요.';
 
     var fields = $('fields');
     fields.innerHTML = '';
@@ -290,8 +277,10 @@
     return '';
   }
 
+  // 한 번 넘어간 문제는 다시 돌아갈 수 없습니다 (선생님이 문제마다 정답을 공개하기 때문).
   $('quiz-form').addEventListener('submit', function (event) {
     event.preventDefault();
+    if ($('next-button').disabled) return;
     var error = readCurrentAnswers();
     if (error) { $('quiz-error').textContent = error; return; }
     if (state.index < QUESTIONS.length - 1) {
@@ -299,58 +288,27 @@
       saveProgress();
       renderQuestion();
     } else {
-      renderReview();
-      show('review');
+      submitAll();
     }
   });
 
-  $('prev-button').addEventListener('click', function () {
-    readCurrentAnswers();
-    state.index--;
-    saveProgress();
-    renderQuestion();
-  });
-
-  // ---- 제출 전 확인 ----
   function answerSummary(i) {
     return state.answers[i].map(function (value, j) {
       return QUESTIONS[i].fields[j].type === 'number' ? value + '명' : value;
     }).join(', ');
   }
 
-  function renderReview() {
-    var list = $('review-list');
-    list.innerHTML = '';
-    QUESTIONS.forEach(function (q, i) {
-      var li = document.createElement('li');
-      li.innerHTML = '<span class="no"></span><span class="ans"></span>';
-      li.querySelector('.no').textContent = (i + 1) + '번';
-      li.querySelector('.ans').textContent = answerSummary(i);
-      var edit = document.createElement('button');
-      edit.type = 'button';
-      edit.className = 'secondary';
-      edit.textContent = '고치기';
-      edit.addEventListener('click', function () {
-        state.index = i;
-        renderQuestion();
-        show('quiz');
-      });
-      li.appendChild(edit);
-      list.appendChild(li);
-    });
-  }
-
-  $('submit-button').addEventListener('click', function () {
+  function submitAll() {
     if (!confirm('정말 제출할까요? 제출하면 고칠 수 없어요.')) return;
-    $('submit-button').disabled = true;
-    $('submit-button').textContent = '제출하는 중...';
-    $('submit-error').textContent = '';
+    $('next-button').disabled = true;
+    $('next-button').textContent = '제출하는 중...';
+    $('quiz-error').textContent = '';
     google.script.run
       .withSuccessHandler(function (res) {
-        $('submit-button').disabled = false;
-        $('submit-button').textContent = '제출하기';
+        $('next-button').disabled = false;
+        $('next-button').textContent = '제출하기';
         if (res.alreadySubmitted) {
-          $('submit-error').textContent = '이미 제출한 학번이에요. 선생님께 말씀해 주세요.';
+          $('quiz-error').textContent = '이미 제출한 학번이에요. 선생님께 말씀해 주세요.';
           return;
         }
         clearProgress();
@@ -358,12 +316,12 @@
         show('result');
       })
       .withFailureHandler(function () {
-        $('submit-button').disabled = false;
-        $('submit-button').textContent = '제출하기';
-        $('submit-error').textContent = '제출에 실패했어요. 잠시 후 다시 눌러 주세요.';
+        $('next-button').disabled = false;
+        $('next-button').textContent = '제출하기';
+        $('quiz-error').textContent = '제출에 실패했어요. 잠시 후 다시 눌러 주세요.';
       })
       .submitAnswers({ studentId: state.studentId, name: state.name, answers: state.answers });
-  });
+  }
 
   // ---- 결과 ----
   function renderResult(res) {
