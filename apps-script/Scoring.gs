@@ -86,8 +86,8 @@ var QUESTIONS = [
   {
     text: '대학 학위를 가진 사람은 39명, 인터넷을 이용하는 사람은 65명, 글을 읽고 쓸 수 있는 사람은 몇 명일까?',
     fields: [{ label: '글을 읽고 쓸 수 있는 사람 수', type: 'number' }],
-    answerText: '66명',
-    score: function (a) { return percentScore(toNumber(a[0]), 66, 10, 2); }
+    answerText: '87명',
+    score: function (a) { return percentScore(toNumber(a[0]), 87, 10, 2); }
   },
   {
     text: '세계에서 가장 많이 사용되는 언어는 무엇일까?',
@@ -132,7 +132,7 @@ var QUESTIONS = [
     fields: [{ label: '말라리아에 감염되는 사람 수', type: 'number' }],
     answerText: '3~4명',
     score: function (a) {
-      return tableScore(toNumber(a[0]), { 1: 6, 2: 8, 3: 10, 4: 10, 5: 8, 6: 6, 7: 4, 8: 2 });
+      return tableScore(toNumber(a[0]), { 0: 4, 1: 6, 2: 8, 3: 10, 4: 10, 5: 8, 6: 6, 7: 4, 8: 2 });
     }
   }
 ];

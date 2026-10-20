@@ -4,6 +4,7 @@
  */
 
 var SHEET_NAME = '제출';
+var RANK_SHEET_NAME = '순위';
 
 /** true로 바꾸면 제출 후 학생 화면에 문항별 정답도 보여줍니다. */
 var SHOW_ANSWERS_AFTER_SUBMIT = false;
@@ -21,10 +22,13 @@ function doGet() {
 
 function getSheet_() {
   var spreadsheet = SpreadsheetApp.getActiveSpreadsheet();
-  var sheet = spreadsheet.getSheetByName(SHEET_NAME);
-  if (sheet) return sheet;
+  var sheet = spreadsheet.getSheetByName(SHEET_NAME) || createSubmitSheet_(spreadsheet);
+  if (!spreadsheet.getSheetByName(RANK_SHEET_NAME)) createRankSheet_(spreadsheet);
+  return sheet;
+}
 
-  sheet = spreadsheet.insertSheet(SHEET_NAME);
+function createSubmitSheet_(spreadsheet) {
+  var sheet = spreadsheet.insertSheet(SHEET_NAME);
   var header = ['제출 시각', '학번', '이름'];
   QUESTIONS.forEach(function (_, i) { header.push((i + 1) + '번 점수'); });
   header.push('합계');
@@ -34,6 +38,27 @@ function getSheet_() {
   sheet.getRange(1, 1, 1, header.length).setFontWeight('bold').setBackground('#e8f0fe');
   sheet.getRange('B:B').setNumberFormat('@');
   return sheet;
+}
+
+/** 제출 탭을 합계 높은 순(동점이면 먼저 제출한 순)으로 보여주는 순위 탭. 수식이라 자동으로 갱신됩니다. */
+function createRankSheet_(spreadsheet) {
+  var sheet = spreadsheet.insertSheet(RANK_SHEET_NAME);
+  var src = "'" + SHEET_NAME + "'!";
+  var totalColumn = String.fromCharCode('A'.charCodeAt(0) + 3 + QUESTIONS.length); // 합계 열 (N)
+  sheet.getRange(1, 1, 1, 5).setValues([['순위', '학번', '이름', '합계', '제출 시각']])
+    .setFontWeight('bold').setBackground('#e8f0fe');
+  sheet.getRange('A2').setFormula('=ARRAYFORMULA(IF(D2:D="", "", RANK(D2:D, D2:D, FALSE)))');
+  sheet.getRange('B2').setFormula(
+    '=IFERROR(SORT(FILTER({' + src + 'B2:B, ' + src + 'C2:C, ' + src + totalColumn + '2:' + totalColumn + ', ' + src + 'A2:A}, ' +
+    src + 'B2:B<>""), 3, FALSE, 4, TRUE), "")');
+  sheet.getRange('E:E').setNumberFormat('yyyy-mm-dd hh:mm:ss');
+  sheet.setFrozenRows(1);
+  return sheet;
+}
+
+/** 설치 직후 편집기에서 한 번 실행하면 제출·순위 탭을 미리 만들어 둡니다. */
+function setup() {
+  getSheet_();
 }
 
 function cleanText_(value, maxLength) {
