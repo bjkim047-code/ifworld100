@@ -15,10 +15,16 @@
 
 1. 구글 드라이브에서 **새 구글 시트**를 만듭니다. (예: `세계가 100명이라면 - 제출`)
 2. 시트 메뉴 **확장 프로그램 → Apps Script**를 엽니다.
-3. 편집기에 이 저장소의 `apps-script` 폴더 파일을 같은 이름으로 넣습니다.
-   - 기본으로 있는 `Code.gs` 내용을 지우고 `Code.gs` 내용을 붙여넣기
-   - `+` → **스크립트** → 이름 `Scoring` → `Scoring.gs` 내용 붙여넣기
-   - `+` → **HTML** → 이름 `Index` → `Index.html` 내용 붙여넣기
+3. Apps Script 편집기 왼쪽 **파일** 목록에 아래 3개 파일을 만들고, 이 저장소의 코드를 복사해 붙여넣습니다.
+   코드 복사: GitHub에서 [`apps-script`](apps-script) 폴더의 파일을 클릭 → 코드 오른쪽 위 **복사 아이콘(Copy raw file)** 클릭.
+
+   | 편집기에 만들 파일 | 만드는 방법 | 붙여넣을 코드 |
+   | --- | --- | --- |
+   | `Code.gs` | 처음부터 있음. 안의 `function myFunction() {}` 를 모두 지움 | [`Code.gs`](apps-script/Code.gs) |
+   | `Scoring.gs` | **파일** 옆 **+** → **스크립트** → 이름에 `Scoring` 입력 (`.gs`는 자동으로 붙음) | [`Scoring.gs`](apps-script/Scoring.gs) |
+   | `Index.html` | **파일** 옆 **+** → **HTML** → 이름에 `Index` 입력 (`.html`은 자동으로 붙음) | [`Index.html`](apps-script/Index.html) |
+
+   파일 이름은 대소문자까지 똑같이 적어야 합니다 (`index`가 아니라 `Index`).
 4. 💾 저장 후, 위쪽 함수 목록에서 `setup`을 고르고 **▶ 실행** → 권한 승인
    (내 구글 계정 선택 → 고급 → 안전하지 않은 페이지로 이동 → 허용). 시트에 `제출`·`순위` 탭이 생깁니다.
 5. 오른쪽 위 **배포 → 새 배포**
