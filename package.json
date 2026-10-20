@@ -1,0 +1,7 @@
+{
+  "name": "ifworld100",
+  "private": true,
+  "scripts": {
+    "test": "node --test"
+  }
+}
